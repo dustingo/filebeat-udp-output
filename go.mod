@@ -1,4 +1,4 @@
-module gitee.com/kybeijing/filebeat-udp-output
+module github.com/dustingo/filebeat-udp-output
 
 go 1.17
 
