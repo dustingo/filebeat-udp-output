@@ -6,7 +6,9 @@ import (
 	"net"
 
 	"github.com/elastic/beats/v7/libbeat/beat"
-	"github.com/elastic/beats/v7/libbeat/common"
+	c "github.com/elastic/elastic-agent-libs/config"
+
+	//"github.com/elastic/beats/v7/libbeat/common"
 	"github.com/elastic/beats/v7/libbeat/outputs"
 	"github.com/elastic/beats/v7/libbeat/outputs/codec"
 	"github.com/elastic/beats/v7/libbeat/publisher"
@@ -34,8 +36,8 @@ func makeUdpOutput(
 	_ outputs.IndexManager,
 	beat beat.Info,
 	observer outputs.Observer,
-	//cfg *c.C,
-	cfg *common.Config,
+	cfg *c.C,
+	//cfg *common.Config,
 ) (outputs.Group, error) {
 	config := defaultConfig()
 	if err := cfg.Unpack(&config); err != nil {
