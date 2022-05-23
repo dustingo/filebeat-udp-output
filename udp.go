@@ -37,7 +37,6 @@ func makeUdpOutput(
 	beat beat.Info,
 	observer outputs.Observer,
 	cfg *c.C,
-	//cfg *common.Config,
 ) (outputs.Group, error) {
 	config := defaultConfig()
 	if err := cfg.Unpack(&config); err != nil {
