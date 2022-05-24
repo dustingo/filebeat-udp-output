@@ -7,9 +7,6 @@ import (
 
 	"github.com/elastic/beats/v7/libbeat/beat"
 	"github.com/elastic/beats/v7/libbeat/common"
-
-	// "github.com/elastic/elastic-agent-libs/config"
-
 	"github.com/elastic/beats/v7/libbeat/outputs"
 	"github.com/elastic/beats/v7/libbeat/outputs/codec"
 	"github.com/elastic/beats/v7/libbeat/publisher"
@@ -55,7 +52,7 @@ func makeUdpOutput(
 	if err := uo.init(beat, config); err != nil {
 		return outputs.Fail(err)
 	}
-	_ = cfg.SetInt("bulk_max_size", -1, int64(config.BulkMaxSize))
+	_ = cfg.SetInt("bulk_max_size", -1, int64(uo.bulkMaxSize))
 	return outputs.Success(-1, 2, uo)
 }
 
@@ -83,9 +80,12 @@ func (out *udpOutput) Publish(_ context.Context, batch publisher.Batch) error {
 	events := batch.Events()
 	st.NewBatch(len(events))
 	dropped := 0
-
-	fmt.Println("=====>debug: beat.beat: ", out.beat.Beat)
-	fmt.Println("=====>debug: beat.beat: ", out.beat.IndexPrefix)
+	conn, err := net.DialUDP("udp", nil, out.remoteAddress)
+	if err != nil {
+		return err
+	}
+	out.connection = conn
+	defer out.Close()
 	for i := range events {
 		event := &events[i]
 		serializedEvent, err := out.codec.Encode(out.beat.Beat, &event.Content)
