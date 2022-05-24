@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/elastic/beats/v7/libbeat/beat"
 	"github.com/elastic/beats/v7/libbeat/common"
@@ -14,7 +15,6 @@ import (
 )
 
 func init() {
-	fmt.Println("register putput udp")
 	outputs.RegisterType("udp", makeUdpOutput)
 }
 
@@ -39,7 +39,6 @@ func makeUdpOutput(
 ) (outputs.Group, error) {
 	config := defaultConfig()
 	if err := cfg.Unpack(&config); err != nil {
-		fmt.Println("error============>", err)
 		return outputs.Fail(err)
 	}
 	// // disable bulk support in publisher pipeline
@@ -80,6 +79,7 @@ func (out *udpOutput) Publish(_ context.Context, batch publisher.Batch) error {
 	events := batch.Events()
 	st.NewBatch(len(events))
 	dropped := 0
+
 	conn, err := net.DialUDP("udp", nil, out.remoteAddress)
 	if err != nil {
 		return err
@@ -88,7 +88,9 @@ func (out *udpOutput) Publish(_ context.Context, batch publisher.Batch) error {
 	defer out.Close()
 	for i := range events {
 		event := &events[i]
-		serializedEvent, err := out.codec.Encode(out.beat.Beat, &event.Content)
+		//serializedEvent, err := out.codec.Encode(out.beat.Beat, &event.Content)
+		i, _ := event.Content.GetValue("message")
+		serializedEvent := []byte(fmt.Sprint(i))
 		if err != nil {
 			if event.Guaranteed() {
 				out.log.Errorf("Failed to serialize the event: %+v", err)
@@ -104,9 +106,9 @@ func (out *udpOutput) Publish(_ context.Context, batch publisher.Batch) error {
 		if _, err = out.connection.Write(append(serializedEvent, '\n')); err != nil {
 			st.WriteError(err)
 			if event.Guaranteed() {
-				out.log.Errorf("Writing event to file failed with: %+v", err)
+				out.log.Errorf("Writing event to udp failed with: %+v", err)
 			} else {
-				out.log.Warnf("Writing event to file failed with: %+v", err)
+				out.log.Warnf("Writing event to udp failed with: %+v", err)
 			}
 
 			dropped++
@@ -118,7 +120,7 @@ func (out *udpOutput) Publish(_ context.Context, batch publisher.Batch) error {
 
 	st.Dropped(dropped)
 	st.Acked(len(events) - dropped)
-
+	time.Sleep(time.Duration(out.bulkSendDelay) * time.Millisecond)
 	return nil
 }
 
