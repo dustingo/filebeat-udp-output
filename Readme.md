@@ -2,7 +2,7 @@
 ### 版本  
 beats/V7
 ### 使用方法  
-1. 手动注册到filebeat的main文件
+方法1. 手动注册到filebeat的main文件
 ```golang
 package main
 
@@ -28,7 +28,7 @@ func main() {
 	}
 }
 ```
-2. 将代码copy到libeat的outputs，然后在main文件手动注册
+方法2. 将代码copy到libeat的outputs，然后在main文件手动注册
 ```golang
 import _ "github.com/elastic/beats/v7/libbeat/outputs/udp"
 ```
@@ -40,4 +40,3 @@ output.udp:
   bulk_max_size: 1000
   bulk_send_delay: 20
 ```
-###用途
