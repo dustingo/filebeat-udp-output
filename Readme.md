@@ -38,6 +38,6 @@ output.udp:
   host: localhost
   port: 514
   bulk_max_size: 1000
-  bulk_send_delay: 20  #最好稍微延迟一下
-  only_message: true
+  bulk_send_delay: 20
 ```
+###用途

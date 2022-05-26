@@ -27,7 +27,7 @@ type udpOutput struct {
 	codec         codec.Codec
 	bulkMaxSize   int
 	bulkSendDelay int
-	onlyMessage   bool
+	//onlyMessage   bool
 }
 
 func makeUdpOutput(
@@ -41,8 +41,6 @@ func makeUdpOutput(
 	if err := cfg.Unpack(&config); err != nil {
 		return outputs.Fail(err)
 	}
-	// // disable bulk support in publisher pipeline
-	// _ = cfg.SetInt("bulk_max_size", -1, -1)
 	uo := &udpOutput{
 		log:      logp.NewLogger("terminal"),
 		beat:     beat,
@@ -59,7 +57,7 @@ func (out *udpOutput) init(beat beat.Info, c udpConfig) error {
 	var err error
 	out.bulkMaxSize = c.BulkMaxSize
 	out.bulkSendDelay = c.BulkSendDelay
-	out.onlyMessage = c.OnlyMessage
+	//out.onlyMessage = c.OnlyMessage
 	out.codec, err = codec.CreateEncoder(beat, c.Codec)
 	if err != nil {
 		return err
@@ -88,33 +86,19 @@ func (out *udpOutput) Publish(_ context.Context, batch publisher.Batch) error {
 	defer out.Close()
 	for i := range events {
 		event := &events[i]
-		//serializedEvent, err := out.codec.Encode(out.beat.Beat, &event.Content)
-		i, _ := event.Content.GetValue("message")
-		serializedEvent := []byte(fmt.Sprint(i))
+		serializedEvent, err := out.codec.Encode(out.beat.Beat, &event.Content)
 		if err != nil {
-			if event.Guaranteed() {
-				out.log.Errorf("Failed to serialize the event: %+v", err)
-			} else {
-				out.log.Warnf("Failed to serialize the event: %+v", err)
-			}
+			out.log.Errorf("Failed to serialize the event: %+v", err)
 			out.log.Debugf("Failed event: %v", event)
-
 			dropped++
 			continue
 		}
-
-		if _, err = out.connection.Write(append(serializedEvent, '\n')); err != nil {
+		if _, err = out.connection.Write(serializedEvent); err != nil {
 			st.WriteError(err)
-			if event.Guaranteed() {
-				out.log.Errorf("Writing event to udp failed with: %+v", err)
-			} else {
-				out.log.Warnf("Writing event to udp failed with: %+v", err)
-			}
-
+			out.log.Errorf("Writing event to udp failed with: %+v", err)
 			dropped++
 			continue
 		}
-
 		st.WriteBytes(len(serializedEvent) + 1)
 	}
 
