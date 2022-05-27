@@ -42,7 +42,7 @@ func makeUdpOutput(
 		return outputs.Fail(err)
 	}
 	uo := &udpOutput{
-		log:      logp.NewLogger("terminal"),
+		log:      logp.NewLogger("udp"),
 		beat:     beat,
 		observer: observer,
 	}
